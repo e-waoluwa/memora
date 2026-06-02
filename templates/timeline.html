@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+{% block title %}Memora — Timeline{% endblock %}
+
+{% block head %}
+<!-- Leaflet map for outdoor pins -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<style>
+    .timeline-layout {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 28px;
+        margin-top: 32px;
+    }
+
+    @media (max-width: 900px) {
+        .timeline-layout { grid-template-columns: 1fr; }
+    }
+
+    /* ── Map ── */
+    #map {
+        height: 420px;
+        border-radius: 4px;
+        border: 1px solid var(--border2);
+        background: var(--surface2);
+        position: sticky;
+        top: 90px;
+    }
+
+    .map-placeholder {
+        height: 420px;
+        border-radius: 4px;
+        border: 1px solid var(--border2);
+        background: var(--surface2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        gap: 10px;
+        position: sticky;
+        top: 90px;
+    }
+
+    .map-placeholder .icon { font-size: 40px; }
+    .map-placeholder p {
+        font-size: 10px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+    }
+
+    /* ── Timeline entries ── */
+    .timeline-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .timeline-entry {
+        display: flex;
+        gap: 16px;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border);
+        position: relative;
+        cursor: default;
+        transition: background 0.15s;
+    }
+
+    .timeline-entry:last-child { border-bottom: none; }
+    .timeline-entry:hover { background: var(--surface2); 
+                            padding-left: 8px; border-radius: 4px; }
+
+    /* dot + line */
+    .entry-dot-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+        width: 24px;
+    }
+
+    .entry-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid var(--accent);
+        background: var(--bg);
+        flex-shrink: 0;
+        margin-top: 4px;
+    }
+
+    .entry-dot.outdoor  { background: var(--accent); }
+    .entry-dot.indoor   { background: transparent; }
+    .entry-dot.unknown  { border-color: var(--text-muted); }
+
+    .entry-line {
+        flex: 1;
+        width: 1px;
+        background: var(--border2);
+        margin-top: 4px;
+    }
+
+    /* content */
+    .entry-content { flex: 1; }
+
+    .entry-location {
+        font-size: 15px;
+        color: var(--text);
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        text-transform: capitalize;
+        margin-bottom: 4px;
+    }
+
+    .entry-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .entry-time {
+        font-size: 11px;
+        color: var(--text-muted);
+        letter-spacing: 1px;
+    }
+
+    .entry-badge {
+        font-size: 9px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 2px;
+        border: 1px solid;
+    }
+
+    .entry-badge.outdoor {
+        color: var(--accent);
+        border-color: var(--accent);
+    }
+
+    .entry-badge.indoor {
+        color: #64b5f6;
+        border-color: #64b5f6;
+    }
+
+    .entry-badge.unknown {
+        color: var(--text-muted);
+        border-color: var(--text-muted);
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: var(--text-muted);
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state p {
+        font-size: 11px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+    }
+
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 14px 20px;
+        flex: 1;
+        min-width: 120px;
+        position: relative;
+    }
+
+    .stat-card::before, .stat-card::after {
+        content: '';
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-color: var(--accent);
+        border-style: solid;
+        opacity: 0.3;
+    }
+    .stat-card::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+    .stat-card::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+    .stat-value {
+        font-family: var(--font-head);
+        font-size: 32px;
+        color: var(--accent);
+        line-height: 1;
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 9px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <div class="section-label">Movement History</div>
+    <div class="section-title">Timeline</div>
+
+    {% if entries %}
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-value">{{ entries|length }}</div>
+            <div class="stat-label">Total locations</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ outdoor_count }}</div>
+            <div class="stat-label">Outdoor</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ indoor_count }}</div>
+            <div class="stat-label">Indoor</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ unique_locations }}</div>
+            <div class="stat-label">Unique places</div>
+        </div>
+    </div>
+
+    <div class="timeline-layout">
+
+        <!-- Left: timeline list -->
+        <div class="timeline-list">
+            {% for entry in entries %}
+            <div class="timeline-entry"
+                 {% if entry.lat and entry.lng %}
+                 onclick="focusMap({{ entry.lat }}, {{ entry.lng }}, '{{ entry.location }}')"
+                 {% endif %}>
+
+                <div class="entry-dot-wrap">
+                    <div class="entry-dot {{ entry.location_type }}"></div>
+                    {% if not loop.last %}
+                    <div class="entry-line"></div>
+                    {% endif %}
+                </div>
+
+                <div class="entry-content">
+                    <div class="entry-location">
+                        {% if entry.location_type == "outdoor" %}📍{% elif entry.location_type == "indoor" %}🏠{% else %}❓{% endif %}
+                        {{ entry.location }}
+                    </div>
+                    <div class="entry-meta">
+                        <span class="entry-time">{{ entry.time }}</span>
+                        <span class="entry-badge {{ entry.location_type }}">{{ entry.location_type }}</span>
+                    </div>
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Right: map -->
+        <div>
+            {% if has_outdoor %}
+            <div id="map"></div>
+            {% else %}
+            <div class="map-placeholder">
+                <div class="icon">🗺️</div>
+                <p>Map appears when outdoors</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">📍</div>
+        <p>No movement logged yet — run brain.py to begin</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if has_outdoor %}
+<script>
+    // build outdoor map points from server
+    const points = {{ map_points | tojson }};
+
+    // init map centered on first point
+    const first = points[0];
+    const map   = L.map('map', {
+        center: [first.lat, first.lng],
+        zoom: 14,
+        zoomControl: true,
+    });
+
+    // dark tile layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap © CARTO',
+        maxZoom: 19,
+    }).addTo(map);
+
+    // custom green marker
+    const greenIcon = L.divIcon({
+        className: '',
+        html: `<div style="
+            width:12px; height:12px;
+            background:#00ff88;
+            border-radius:50%;
+            border:2px solid #050505;
+            box-shadow:0 0 6px #00ff88;
+        "></div>`,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6],
+    });
+
+    // plot each point
+    const latlngs = [];
+    points.forEach(p => {
+        const latlng = [p.lat, p.lng];
+        latlngs.push(latlng);
+        L.marker(latlng, { icon: greenIcon })
+            .addTo(map)
+            .bindPopup(`
+                <div style="font-family:monospace; font-size:12px; color:#000;">
+                    <strong>${p.location}</strong><br>
+                    ${p.time}
+                </div>
+            `);
+    });
+
+    // draw path line between points
+    if (latlngs.length > 1) {
+        L.polyline(latlngs, {
+            color: '#00ff88',
+            weight: 2,
+            opacity: 0.4,
+            dashArray: '4 6',
+        }).addTo(map);
+    }
+
+    function focusMap(lat, lng, label) {
+        map.setView([lat, lng], 16);
+    }
+</script>
+{% endif %}
+{% endblock %}

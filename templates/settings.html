@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Memora — Settings{% endblock %}
+
+{% block head %}
+<style>
+    .settings-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-top: 32px;
+    }
+
+    @media (max-width: 700px) {
+        .settings-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel-label {
+        font-size: 9px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .panel-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+    }
+
+    .setting-row {
+        margin-bottom: 20px;
+    }
+
+    .setting-label {
+        font-size: 10px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+
+    .setting-desc {
+        font-size: 11px;
+        color: var(--text-dim);
+        margin-top: 6px;
+        line-height: 1.5;
+    }
+
+    .input-row {
+        display: flex;
+        gap: 8px;
+    }
+    .input-row input { flex: 1; }
+
+    .status-msg {
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-top: 10px;
+        min-height: 24px;
+        transition: color 0.3s;
+    }
+    .status-msg.ok    { color: var(--accent); }
+    .status-msg.error { color: var(--danger); }
+
+    /* current wake word display */
+    .wake-word-display {
+        background: var(--surface2);
+        border: 1px solid var(--border2);
+        border-left: 3px solid var(--accent);
+        border-radius: 3px;
+        padding: 14px 18px;
+        margin-bottom: 16px;
+    }
+
+    .wake-word-display .label {
+        font-size: 9px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+
+    .wake-word-display .word {
+        font-family: var(--font-head);
+        font-size: 28px;
+        letter-spacing: 4px;
+        color: var(--accent);
+    }
+
+    /* how to use box */
+    .how-to {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 20px;
+    }
+
+    .command-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 12px;
+    }
+
+    .command-list li {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        padding: 10px 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+    }
+
+    .command-list .cmd {
+        color: var(--accent);
+        font-size: 12px;
+        letter-spacing: 1px;
+    }
+
+    .command-list .desc {
+        color: var(--text-muted);
+        font-size: 10px;
+        letter-spacing: 1px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <div class="section-label">Configuration</div>
+    <div class="section-title">Settings</div>
+
+    <div class="settings-grid">
+
+        <!-- Wake word panel -->
+        <div class="panel">
+            <div class="panel-label">Wake Word</div>
+
+            <div class="wake-word-display">
+                <div class="label">Current wake word</div>
+                <div class="word" id="current-word">{{ wake_word | upper }}</div>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-label">Change Wake Word</div>
+                <div class="input-row">
+                    <input id="new-word"
+                           type="text"
+                           placeholder="e.g. iris, nova, ewa..."
+                           maxlength="20">
+                    <button class="btn btn-primary" onclick="saveWakeWord()">Save</button>
+                </div>
+                <div class="setting-desc">
+                    Say this word to activate Memora voice assistant.<br>
+                    Example: if you set <span style="color:var(--accent)">"iris"</span>
+                    — just say <span style="color:var(--accent)">"Hey Iris"</span> or
+                    <span style="color:var(--accent)">"Iris"</span>.
+                </div>
+                <div class="status-msg" id="status"></div>
+            </div>
+        </div>
+
+        <!-- How to use panel -->
+        <div>
+            <div class="panel-label">Voice Commands</div>
+            <div class="how-to">
+                <div style="font-size:11px; color:var(--text-muted); letter-spacing:1px; margin-bottom:4px;">
+                    After saying the wake word:
+                </div>
+                <ul class="command-list">
+                    <li>
+                        <span class="cmd">"Where is my phone?"</span>
+                        <span class="desc">Find last seen location of any item</span>
+                    </li>
+                    <li>
+                        <span class="cmd">"Where is my bag?"</span>
+                        <span class="desc">Works for any registered item</span>
+                    </li>
+                    <li>
+                        <span class="cmd">"What are you watching?"</span>
+                        <span class="desc">List all registered items</span>
+                    </li>
+                    <li>
+                        <span class="cmd">"What time is it?"</span>
+                        <span class="desc">Current time</span>
+                    </li>
+                    <li>
+                        <span class="cmd">"Help"</span>
+                        <span class="desc">List available commands</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function saveWakeWord() {
+        const word = document.getElementById("new-word").value.trim().toLowerCase();
+        const status = document.getElementById("status");
+
+        if (!word) {
+            status.textContent = "Enter a word first";
+            status.className = "status-msg error";
+            return;
+        }
+
+        if (word.includes(" ")) {
+            status.textContent = "One word only — no spaces";
+            status.className = "status-msg error";
+            return;
+        }
+
+        fetch("/settings/wake-word", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ wake_word: word })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === "ok") {
+                document.getElementById("current-word").textContent = word.toUpperCase();
+                document.getElementById("new-word").value = "";
+                status.textContent = `✓ Wake word set to "${word}"`;
+                status.className = "status-msg ok";
+            } else {
+                status.textContent = data.message;
+                status.className = "status-msg error";
+            }
+        });
+    }
+
+    // save on enter key
+    document.getElementById("new-word").addEventListener("keydown", e => {
+        if (e.key === "Enter") saveWakeWord();
+    });
+</script>
+{% endblock %}

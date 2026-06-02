@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Memora — Gallery{% endblock %}
+
+{% block head %}
+<style>
+    .gallery-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .search-form {
+        display: flex;
+        gap: 8px;
+    }
+
+    .search-form input { width: 220px; }
+
+    .count-label {
+        font-size: 10px;
+        letter-spacing: 3px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    /* ── Grid ── */
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 14px;
+    }
+
+    /* ── Card ── */
+    .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+        text-decoration: none;
+        color: var(--text);
+        display: block;
+        transition: border-color 0.2s, transform 0.2s;
+        position: relative;
+    }
+
+    .card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+    }
+
+    /* corner brackets on hover */
+    .card::before, .card::after {
+        content: '';
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-color: var(--accent);
+        border-style: solid;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 2;
+    }
+    .card::before { top: 4px; left: 4px; border-width: 2px 0 0 2px; }
+    .card::after  { bottom: 4px; right: 4px; border-width: 0 2px 2px 0; }
+    .card:hover::before, .card:hover::after { opacity: 1; }
+
+    .card img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        display: block;
+        background: var(--surface2);
+    }
+
+    .card-body {
+        padding: 10px 12px;
+        border-top: 1px solid var(--border);
+    }
+
+    .card-name {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--accent);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .card-time {
+        font-size: 10px;
+        color: var(--text-muted);
+        letter-spacing: 1px;
+    }
+
+    /* ── Empty ── */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-state .big { font-size: 48px; margin-bottom: 16px; }
+
+    .empty-state p {
+        font-size: 11px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <div class="gallery-header">
+        <div>
+            <div class="section-label">Memory Archive</div>
+            <div class="section-title">Gallery</div>
+            {% if items %}
+                <span class="count-label">{{ items|length }} snapshot{{ 's' if items|length != 1 }}</span>
+            {% endif %}
+        </div>
+
+        <form class="search-form" method="GET" action="/gallery">
+            <input name="q" type="text" placeholder="Search..." value="{{ query or '' }}">
+            <button class="btn btn-primary" type="submit">Search</button>
+            {% if query %}
+                <a href="/gallery" class="btn btn-ghost">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if items %}
+        <div class="grid">
+            {% for item in items %}
+            <a class="card" href="/memory/{{ item.filename }}">
+                <img src="/snapshots/{{ item.filename }}"
+                     alt="{{ item.item }}"
+                     loading="lazy"
+                     onerror="this.style.height='80px'">
+                <div class="card-body">
+                    <div class="card-name">{{ item.item }}</div>
+                    <div class="card-time">
+                        👁 {{ item.time if item.time else 'recorded' }}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+    {% else %}
+        <div class="empty-state">
+            <div class="big">👁️</div>
+            <p>
+                {% if query %}
+                    No snapshots found for "{{ query }}"
+                {% else %}
+                    No memories yet — run brain.py to begin
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

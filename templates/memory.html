@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Memora — {{ item }}{% endblock %}
+
+{% block head %}
+<style>
+    .memory-layout {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 28px;
+        margin-top: 32px;
+    }
+
+    @media (max-width: 800px) {
+        .memory-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Image */
+    .memory-img-wrap {
+        position: relative;
+        border-radius: 4px;
+        overflow: hidden;
+        background: var(--surface2);
+        border: 1px solid var(--border2);
+    }
+
+    .memory-img-wrap img {
+        width: 100%;
+        display: block;
+    }
+
+    .memory-img-wrap::before,
+    .memory-img-wrap::after {
+        content: '';
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        border-color: var(--accent);
+        border-style: solid;
+        opacity: 0.6;
+        z-index: 2;
+    }
+    .memory-img-wrap::before { top: 10px; left: 10px; border-width: 2px 0 0 2px; }
+    .memory-img-wrap::after  { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; }
+
+    /* Details panel */
+    .detail-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .detail-row {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 16px 20px;
+    }
+
+    .detail-key {
+        font-size: 9px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+    }
+
+    .detail-value {
+        font-size: 18px;
+        color: white;
+        letter-spacing: 1px;
+    }
+
+    .detail-value.accent { color: var(--accent); }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 10px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+        transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--accent); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <a href="/gallery" class="back-link">← Back to Gallery</a>
+
+    <div class="section-label">Memory Detail</div>
+    <div class="section-title">{{ item | upper }}</div>
+
+    <div class="memory-layout">
+
+        <!-- Snapshot -->
+        <div class="memory-img-wrap">
+            <img src="/snapshots/{{ image }}" alt="{{ item }}">
+        </div>
+
+        <!-- Details -->
+        <div class="detail-panel">
+
+            <div class="detail-row">
+                <div class="detail-key">Item</div>
+                <div class="detail-value accent">{{ item }}</div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-key">Last seen</div>
+                <div class="detail-value">{{ time if time else '—' }}</div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-key">Location</div>
+                <div class="detail-value">{{ location if location else '—' }}</div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-key">Snapshot file</div>
+                <div class="detail-value" style="font-size:12px; word-break:break-all; color:var(--text-dim);">
+                    {{ image }}
+                </div>
+            </div>
+
+            <a href="/gallery" class="btn btn-ghost" style="justify-content:center; margin-top:auto;">
+                ← All Snapshots
+            </a>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

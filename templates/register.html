@@ -1,0 +1,29 @@
+<h1>👁️ Register Personal Objects</h1>
+
+<form method="POST">
+
+<label>Detected object:</label>
+<input name="yolo_name">
+
+<br><br>
+
+<label>My item name:</label>
+<input name="custom_name">
+
+<br><br>
+
+<button type="submit">
+Save
+</button>
+
+</form>
+
+<hr>
+
+<h2>Saved Items</h2>
+
+{% for k,v in objects.items() %}
+
+<p>{{k}} → {{v}}</p>
+
+{% endfor %}

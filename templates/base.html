@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Memora 👁️{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* ── Dark mode variables (default) ─────────────────────────────── */
+        :root {
+            --bg:        #050505;
+            --surface:   #0f0f0f;
+            --surface2:  #161616;
+            --border:    #1f1f1f;
+            --border2:   #2a2a2a;
+            --accent:    #00ff88;
+            --accent-dim:#00cc6a;
+            --danger:    #ff4444;
+            --text:      #d4d4d4;
+            --text-dim:  #666;
+            --text-muted:#333;
+            --dot-color: #1a1a1a;
+            --scanline:  rgba(0,0,0,0.08);
+            --font-head: 'Bebas Neue', sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+        }
+
+        /* ── Light mode variables ───────────────────────────────────────── */
+        body.light {
+            --bg:        #f2f2ed;
+            --surface:   #ffffff;
+            --surface2:  #ebebе6;
+            --border:    #e0e0da;
+            --border2:   #d0d0ca;
+            --accent:    #00aa5c;
+            --accent-dim:#008a4a;
+            --danger:    #dd3333;
+            --text:      #1a1a1a;
+            --text-dim:  #555;
+            --text-muted:#aaa;
+            --dot-color: #d8d8d2;
+            --scanline:  rgba(0,0,0,0.02);
+        }
+
+        /* ── Reset ─────────────────────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* ── Base ──────────────────────────────────────────────────────── */
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+            background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                var(--scanline) 2px,
+                var(--scanline) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { color: var(--text); }
+
+        /* ── Nav ───────────────────────────────────────────────────────── */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .nav-logo {
+            font-family: var(--font-head);
+            font-size: 28px;
+            letter-spacing: 4px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-logo .eye {
+            font-size: 22px;
+            animation: blink 4s infinite;
+        }
+
+        @keyframes blink {
+            0%, 90%, 100% { opacity: 1; }
+            95% { opacity: 0; }
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+        }
+
+        .nav-links a {
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            transition: color 0.2s;
+            padding: 6px 0;
+            border-bottom: 1px solid transparent;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* ── Toggle button ─────────────────────────────────────────────── */
+        .theme-toggle {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 20px;
+            padding: 5px 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            width: 58px;
+            justify-content: flex-start;
+            position: relative;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+        }
+
+        .toggle-icon {
+            font-size: 14px;
+            line-height: 1;
+            transition: transform 0.3s;
+            user-select: none;
+        }
+
+        .toggle-track {
+            position: absolute;
+            right: 8px;
+            left: 8px;
+            height: 2px;
+            background: var(--border2);
+            border-radius: 2px;
+        }
+
+        .toggle-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 6px;
+            transition: left 0.25s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 0 6px rgba(0,255,136,0.4);
+        }
+
+        body.light .toggle-thumb { left: 32px; }
+        body.light .theme-toggle { justify-content: flex-end; }
+
+        /* ── Status bar ────────────────────────────────────────────────── */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 32px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .status-bar .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 2s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--accent); }
+            50%       { opacity: 0.4; box-shadow: none; }
+        }
+
+        /* ── Page wrapper ──────────────────────────────────────────────── */
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 32px;
+        }
+
+        /* ── Section header ────────────────────────────────────────────── */
+        .section-label {
+            font-size: 10px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .section-title {
+            font-family: var(--font-head);
+            font-size: 36px;
+            letter-spacing: 3px;
+            color: var(--text);
+            margin-bottom: 24px;
+        }
+
+        /* ── Panel ─────────────────────────────────────────────────────── */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 24px;
+            position: relative;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .panel::before, .panel::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-color: var(--accent);
+            border-style: solid;
+            opacity: 0.4;
+        }
+        .panel::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+        .panel::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+        /* ── Inputs ────────────────────────────────────────────────────── */
+        input[type="text"], input {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 3px;
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            padding: 10px 14px;
+            outline: none;
+            transition: border-color 0.2s, background 0.3s, color 0.3s;
+            width: 100%;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(0,255,136,0.08);
+        }
+
+        input::placeholder { color: var(--text-muted); }
+
+        /* ── Buttons ───────────────────────────────────────────────────── */
+        .btn {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+            font-weight: 500;
+        }
+        .btn-primary:hover {
+            background: var(--text);
+            box-shadow: 0 0 20px rgba(0,255,136,0.2);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-dim);
+            border: 1px solid var(--border2);
+        }
+        .btn-ghost:hover { color: var(--accent); border-color: var(--accent); }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        /* ── Result box ────────────────────────────────────────────────── */
+        .result-box {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-left: 3px solid var(--accent);
+            border-radius: 3px;
+            padding: 14px 18px;
+            font-size: 13px;
+            color: var(--text);
+            display: none;
+            transition: background 0.3s;
+        }
+        .result-box.visible { display: block; }
+
+        .snapshot-img {
+            max-width: 100%;
+            border-radius: 4px;
+            border: 1px solid var(--border2);
+            margin-top: 14px;
+            display: none;
+        }
+        .snapshot-img.visible { display: block; }
+
+        /* ── Footer ────────────────────────────────────────────────────── */
+        footer {
+            text-align: center;
+            padding: 24px;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
+            transition: border-color 0.3s;
+        }
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+    <nav>
+        <a href="/" class="nav-logo">
+            <span class="eye">👁️</span> MEMORA
+        </a>
+        <div class="nav-right">
+            <div class="nav-links">
+                <a href="/"              id="nav-home">Home</a>
+                <a href="/gallery"       id="nav-gallery">Gallery</a>
+                <a href="/timeline"      id="nav-timeline">Timeline</a>
+                <a href="/register-item" id="nav-register">Register</a>
+                <a href="/pair"          id="nav-pair">Pair</a>
+                <a href="/settings"      id="nav-settings">Settings</a>
+            </div>
+
+            <!-- Theme toggle -->
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+                <span class="toggle-icon" id="toggle-icon">🌙</span>
+                <div class="toggle-thumb"></div>
+            </button>
+        </div>
+    </nav>
+
+    <div class="status-bar">
+        <span class="dot"></span>
+        <span>SYSTEM ONLINE</span>
+        <span style="margin-left:auto;">MEMORA VISUAL MEMORY v1.0</span>
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <footer>MEMORA — VISUAL MEMORY SYSTEM — ALL RIGHTS RESERVED</footer>
+
+    <script>
+        // ── Active nav link ───────────────────────────────────────────────
+        const path = window.location.pathname;
+        if (path === '/')                document.getElementById('nav-home').classList.add('active');
+        if (path.startsWith('/gallery')) document.getElementById('nav-gallery').classList.add('active');
+        if (path.startsWith('/timeline'))document.getElementById('nav-timeline').classList.add('active');
+        if (path.startsWith('/register'))document.getElementById('nav-register').classList.add('active');
+        if (path.startsWith('/pair'))    document.getElementById('nav-pair').classList.add('active');
+        if (path.startsWith('/settings'))document.getElementById('nav-settings').classList.add('active');
+
+        // ── Theme toggle ──────────────────────────────────────────────────
+        function applyTheme(mode) {
+            const icon = document.getElementById('toggle-icon');
+            if (mode === 'light') {
+                document.body.classList.add('light');
+                icon.textContent = '☀️';
+            } else {
+                document.body.classList.remove('light');
+                icon.textContent = '🌙';
+            }
+        }
+
+        function toggleTheme() {
+            const isLight = document.body.classList.contains('light');
+            const next    = isLight ? 'dark' : 'light';
+            localStorage.setItem('memora-theme', next);
+            applyTheme(next);
+        }
+
+        // apply saved preference on load
+        const saved = localStorage.getItem('memora-theme') || 'dark';
+        applyTheme(saved);
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

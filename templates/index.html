@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Memora — Home{% endblock %}
+
+{% block head %}
+<style>
+    .hero {
+        text-align: center;
+        padding: 60px 0 40px;
+    }
+
+    .hero-eyebrow {
+        font-size: 10px;
+        letter-spacing: 6px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+    }
+
+    .hero-title {
+        font-family: var(--font-head);
+        font-size: 96px;
+        letter-spacing: 16px;
+        color: var(--text);
+        line-height: 1;
+        margin-bottom: 10px;
+        position: relative;
+        display: inline-block;
+    }
+
+    .hero-title .accent { color: var(--accent); }
+
+    .hero-sub {
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: var(--text-dim);
+        text-transform: uppercase;
+    }
+
+    /* ── Two column layout ── */
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 40px;
+    }
+
+    @media (max-width: 700px) {
+        .grid-2 { grid-template-columns: 1fr; }
+        .hero-title { font-size: 60px; }
+    }
+
+    /* ── Panel label ── */
+    .panel-label {
+        font-size: 9px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .panel-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+    }
+
+    /* ── Input group ── */
+    .input-group {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+    .input-group input { flex: 1; }
+
+    /* ── Camera section ── */
+    .camera-section {
+        margin-top: 40px;
+    }
+
+    .camera-wrap {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+
+    .camera-wrap img {
+        width: 100%;
+        border-radius: 4px;
+        border: 1px solid var(--border2);
+        display: block;
+    }
+
+    /* reticle overlay corners */
+    .camera-wrap::before,
+    .camera-wrap::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: var(--accent);
+        border-style: solid;
+        z-index: 2;
+        opacity: 0.7;
+    }
+    .camera-wrap::before { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+    .camera-wrap::after  { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+    .camera-label {
+        position: absolute;
+        top: 8px;
+        right: 14px;
+        font-size: 9px;
+        letter-spacing: 3px;
+        color: var(--accent);
+        text-transform: uppercase;
+        z-index: 2;
+        animation: pulse 2s infinite;
+    }
+
+    /* ── Voice button ── */
+    .btn-voice {
+        background: transparent;
+        border: 1px solid var(--border2);
+        color: var(--text-dim);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 10px 20px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: all 0.2s;
+        width: 100%;
+        margin-top: 8px;
+    }
+    .btn-voice:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-voice.listening {
+        border-color: var(--danger);
+        color: var(--danger);
+        animation: pulse-red 1s infinite;
+    }
+
+    @keyframes pulse-red {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(255,68,68,0.4); }
+        50% { box-shadow: 0 0 0 6px rgba(255,68,68,0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-eyebrow">Visual Memory System</div>
+        <div class="hero-title">MEM<span class="accent">👁️</span>RA</div>
+        <div class="hero-sub">I remember where you left things</div>
+    </div>
+
+    <!-- Main grid -->
+    <div class="grid-2">
+
+        <!-- Find -->
+        <div class="panel">
+            <div class="panel-label">Search Memory</div>
+            <div class="input-group">
+                <input id="search" type="text" placeholder="e.g. my phone, my bag...">
+                <button class="btn btn-primary" onclick="findItem()">Find</button>
+            </div>
+            <button class="btn-voice" id="voice-btn" onclick="startVoice()">🎤 &nbsp;Speak</button>
+            <div class="result-box" id="result"></div>
+            <img  class="snapshot-img" id="snapshot-result">
+        </div>
+
+        <!-- Add -->
+        <div class="panel">
+            <div class="panel-label">Log Memory</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <input id="item"     type="text" placeholder="Item name...">
+                <input id="location" type="text" placeholder="Location...">
+                <button class="btn btn-primary" onclick="addItem()" style="width:100%; justify-content:center;">
+                    + &nbsp;Save Memory
+                </button>
+            </div>
+            <div class="result-box" id="add-result" style="margin-top:10px;"></div>
+        </div>
+
+    </div>
+
+    <!-- Camera feed -->
+    <div class="camera-section">
+        <div class="panel-label">Live Feed</div>
+        <div class="camera-wrap">
+            <span class="camera-label">● REC</span>
+            <img src="{{ url_for('video') }}" alt="Live Camera Feed">
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}

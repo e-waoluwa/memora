@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pt
+
+# Virtual environment
+venv/
+env/
+
+# User data — stays on watch, not in cloud
+memora_data.json
+timeline.json
+items.json
+object_map.json
+settings.json
+temp/
+registered_items/
+snapshots/
+static/watchid_qr.png
+
+# OS
+.DS_Store
+Thumbs.db
