@@ -195,7 +195,17 @@
         <div class="panel-label">Live Feed</div>
         <div class="camera-wrap">
             <span class="camera-label">● REC</span>
+            {% if is_local %}
             <img src="{{ url_for('video') }}" alt="Live Camera Feed">
+            {% elif watch_id %}
+            <img id="live-feed" src="/watch/{{ watch_id }}/live"
+                 alt="Watch Live Feed"
+                 style="width:100%; border-radius:4px; display:block;">
+            {% else %}
+            <div style="height:200px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:11px;letter-spacing:2px;">
+                CONNECT YOUR WATCH TO SEE LIVE FEED
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -204,4 +214,15 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='script.js') }}"></script>
+{% if watch_id and not is_local %}
+<script>
+    // refresh live feed every second from watch
+    const liveFeed = document.getElementById('live-feed');
+    if (liveFeed) {
+        setInterval(() => {
+            liveFeed.src = liveFeed.src.split('?')[0] + '?t=' + Date.now();
+        }, 1000);
+    }
+</script>
+{% endif %}
 {% endblock %}

@@ -352,6 +352,35 @@
         }
         .snapshot-img.visible { display: block; }
 
+        /* ── Mobile ─────────────────────────────────────────────────── */
+        @media (max-width: 600px) {
+            nav {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .nav-logo { font-size: 22px; }
+
+            .nav-links {
+                gap: 14px;
+                flex-wrap: wrap;
+            }
+
+            .nav-links a {
+                font-size: 10px;
+                letter-spacing: 2px;
+            }
+
+            .theme-toggle { display: none; }
+
+            .status-bar { padding: 6px 16px; }
+
+            .page { padding: 24px 16px; }
+
+            .section-title { font-size: 28px; }
+        }
+
         /* ── Footer ────────────────────────────────────────────────────── */
         footer {
             text-align: center;
@@ -364,6 +393,14 @@
             transition: border-color 0.3s;
         }
     </style>
+
+    <!-- PWA -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#00ff88">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Memora">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
 
     {% block head %}{% endblock %}
 </head>

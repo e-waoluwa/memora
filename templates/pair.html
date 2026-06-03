@@ -158,7 +158,13 @@
         <div class="qr-panel">
             <div class="watchid-label" style="margin-bottom:16px;">Scan to pair</div>
             <div class="qr-wrap">
-                <img src="/static/watchid_qr.png" alt="Watch ID QR Code">
+                {% if qr_base64 %}
+                <img src="data:image/png;base64,{{ qr_base64 }}" alt="Watch ID QR Code">
+                {% else %}
+                <div style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;color:#999;font-size:11px;text-align:center;">
+                    Set Watch ID in Railway Variables
+                </div>
+                {% endif %}
             </div>
             <div class="qr-label">Scan with phone camera</div>
         </div>

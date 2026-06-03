@@ -19,7 +19,8 @@ COOLDOWN_SECONDS  = 30
 RELOAD_EVERY      = 5
 CONFIDENCE_MIN    = 0.65
 ORB_MATCH_MIN     = 6
-TIMELINE_INTERVAL = 120
+FRAME_PUSH_INTERVAL = 1   # push frame every 1 second
+last_frame_push     = 0
 
 # ── Setup ─────────────────────────────────────────────────────────────────────
 os.makedirs(SNAPSHOTS_DIR, exist_ok=True)
@@ -65,6 +66,21 @@ def save_json(path, data):
 
 
 # ── Cloud sync ────────────────────────────────────────────────────────────────
+def sync_frame(frame):
+    """Push current camera frame to cloud every second."""
+    if not CLOUD_URL or not WATCH_ID:
+        return
+    try:
+        _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
+        img_b64   = base64.b64encode(buffer).decode("utf-8")
+        req.post(
+            f"{CLOUD_URL}/api/{WATCH_ID}/frame",
+            json={"frame": img_b64},
+            timeout=2
+        )
+    except Exception:
+        pass
+
 def sync_memory(entry, snap_path):
     """Send memory entry + snapshot to cloud in background."""
     if not CLOUD_URL or not WATCH_ID:
@@ -173,6 +189,7 @@ memory_log        = load_json(MEMORY_FILE, [])
 last_saved        = {}
 last_reload_time  = datetime.now()
 last_timeline_log = time.time() - TIMELINE_INTERVAL
+last_frame_push   = 0
 
 
 # ── Camera ────────────────────────────────────────────────────────────────────
@@ -206,6 +223,12 @@ while True:
     now             = datetime.now()
     detected_labels = [names[int(b.cls[0])] for b in results[0].boxes]
     location_data   = get_location(detected_labels)
+
+    # push live frame to cloud every second
+    if time.time() - last_frame_push >= FRAME_PUSH_INTERVAL:
+        import threading
+        threading.Thread(target=sync_frame, args=(frame,), daemon=True).start()
+        last_frame_push = time.time()
 
     # log timeline
     if time.time() - last_timeline_log >= TIMELINE_INTERVAL:

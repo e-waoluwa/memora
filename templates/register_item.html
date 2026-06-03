@@ -14,7 +14,6 @@
         .register-grid { grid-template-columns: 1fr; }
     }
 
-    /* Camera panel */
     .camera-wrap {
         position: relative;
         background: var(--surface2);
@@ -24,7 +23,7 @@
         aspect-ratio: 4/3;
     }
 
-    .camera-wrap img {
+    .camera-wrap img, .camera-wrap video {
         width: 100%;
         height: 100%;
         object-fit: cover;
@@ -34,20 +33,18 @@
     .camera-wrap::before, .camera-wrap::after {
         content: '';
         position: absolute;
-        width: 20px;
-        height: 20px;
+        width: 20px; height: 20px;
         border-color: var(--accent);
         border-style: solid;
         z-index: 2;
         opacity: 0.6;
     }
-    .camera-wrap::before { top: 10px; left: 10px; border-width: 2px 0 0 2px; }
-    .camera-wrap::after  { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; }
+    .camera-wrap::before { top:10px; left:10px; border-width:2px 0 0 2px; }
+    .camera-wrap::after  { bottom:10px; right:10px; border-width:0 2px 2px 0; }
 
     .rec-badge {
         position: absolute;
-        top: 12px;
-        right: 14px;
+        top:12px; right:14px;
         font-size: 9px;
         letter-spacing: 3px;
         color: var(--accent);
@@ -56,7 +53,6 @@
         animation: pulse 2s infinite;
     }
 
-    /* Preview panel */
     .preview-wrap {
         background: var(--surface2);
         border: 1px solid var(--border2);
@@ -80,16 +76,9 @@
         text-align: center;
         color: var(--text-muted);
     }
-
     .preview-placeholder .icon { font-size: 40px; margin-bottom: 10px; }
+    .preview-placeholder p { font-size:10px; letter-spacing:3px; text-transform:uppercase; }
 
-    .preview-placeholder p {
-        font-size: 10px;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-    }
-
-    /* Controls */
     .controls {
         margin-top: 20px;
         display: flex;
@@ -97,14 +86,9 @@
         gap: 10px;
     }
 
-    .name-row {
-        display: flex;
-        gap: 8px;
-    }
+    .name-row { display:flex; gap:8px; }
+    .name-row input { flex:1; }
 
-    .name-row input { flex: 1; }
-
-    /* Status message */
     .status-msg {
         font-size: 11px;
         letter-spacing: 2px;
@@ -114,27 +98,18 @@
         min-height: 36px;
         transition: color 0.3s;
     }
-    .status-msg.ok     { color: var(--accent); }
-    .status-msg.error  { color: var(--danger); }
+    .status-msg.ok    { color: var(--accent); }
+    .status-msg.error { color: var(--danger); }
 
-    /* Steps guide */
-    .steps {
-        margin-top: 32px;
-        display: flex;
-        gap: 0;
-    }
-
+    .steps { margin-top:32px; display:flex; gap:0; }
     .step {
-        flex: 1;
-        padding: 16px;
-        border: 1px solid var(--border);
+        flex:1; padding:16px;
+        border:1px solid var(--border);
         border-right: none;
         text-align: center;
     }
-    .step:last-child { border-right: 1px solid var(--border); }
-    .step:first-child { border-radius: 4px 0 0 4px; }
-    .step:last-child  { border-radius: 0 4px 4px 0; }
-
+    .step:last-child { border-right:1px solid var(--border); border-radius:0 4px 4px 0; }
+    .step:first-child { border-radius:4px 0 0 4px; }
     .step-num {
         font-family: var(--font-head);
         font-size: 32px;
@@ -143,13 +118,10 @@
         margin-bottom: 6px;
     }
     .step.done .step-num { color: var(--accent); }
+    .step-text { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
 
-    .step-text {
-        font-size: 10px;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: var(--text-muted);
-    }
+    /* hidden file input */
+    #phone-file { display: none; }
 </style>
 {% endblock %}
 
@@ -159,48 +131,54 @@
     <div class="section-label">Memory Registration</div>
     <div class="section-title">Register New Item</div>
 
-    <!-- Step guide -->
     <div class="steps">
-        <div class="step" id="step1">
-            <div class="step-num">01</div>
-            <div class="step-text">Point camera at item</div>
-        </div>
-        <div class="step" id="step2">
-            <div class="step-num">02</div>
-            <div class="step-text">Capture the frame</div>
-        </div>
-        <div class="step" id="step3">
-            <div class="step-num">03</div>
-            <div class="step-text">Name the item</div>
-        </div>
-        <div class="step" id="step4">
-            <div class="step-num">04</div>
-            <div class="step-text">Save to memory</div>
-        </div>
+        <div class="step" id="step1"><div class="step-num">01</div><div class="step-text">Point at item</div></div>
+        <div class="step" id="step2"><div class="step-num">02</div><div class="step-text">Capture frame</div></div>
+        <div class="step" id="step3"><div class="step-num">03</div><div class="step-text">Name the item</div></div>
+        <div class="step" id="step4"><div class="step-num">04</div><div class="step-text">Save to memory</div></div>
     </div>
 
     <div class="register-grid">
 
-        <!-- Live camera -->
+        <!-- Camera side -->
         <div>
-            <div style="font-size:10px; letter-spacing:3px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;">Live Camera</div>
-            <div class="camera-wrap">
-                <span class="rec-badge">● Live</span>
-                <img src="{{ url_for('video_feed') }}" alt="Live feed">
+            <div style="font-size:10px;letter-spacing:3px;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">
+                {% if is_local %}Live Camera{% else %}Phone Camera{% endif %}
             </div>
+
+            <div class="camera-wrap" id="camera-wrap">
+                <span class="rec-badge">● Live</span>
+                {% if is_local %}
+                    <!-- Local: stream from laptop -->
+                    <img src="{{ url_for('video_feed') }}" alt="Live feed">
+                {% else %}
+                    <!-- Cloud: show phone camera preview -->
+                    <video id="phone-video" autoplay playsinline muted></video>
+                {% endif %}
+            </div>
+
+            <!-- Hidden file input for fallback -->
+            <input type="file" id="phone-file" accept="image/*" capture="environment">
+
             <div class="controls">
-                <button class="btn btn-primary" onclick="capture()" style="justify-content:center;">
+                {% if is_local %}
+                <button class="btn btn-primary" onclick="captureLocal()" style="justify-content:center;">
                     📸 &nbsp;Capture This Frame
                 </button>
-                <button class="btn btn-danger" onclick="stopCamera()">
-                    ■ &nbsp;Stop Camera
+                <button class="btn btn-danger" onclick="stopCamera()">■ &nbsp;Stop Camera</button>
+                {% else %}
+                <button class="btn btn-primary" onclick="capturePhone()" style="justify-content:center;">
+                    📸 &nbsp;Take Photo
                 </button>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Preview + save -->
+        <!-- Preview + save side -->
         <div>
-            <div style="font-size:10px; letter-spacing:3px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;">Captured Frame</div>
+            <div style="font-size:10px;letter-spacing:3px;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">
+                Captured Frame
+            </div>
 
             <div class="preview-wrap" id="preview-wrap">
                 <div class="preview-placeholder" id="preview-placeholder">
@@ -220,13 +198,13 @@
         </div>
 
     </div>
-
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    let captured = false;
+    let captured     = false;
+    let capturedBlob = null;   // holds phone camera photo
 
     function setStep(n) {
         for (let i = 1; i <= 4; i++) {
@@ -234,64 +212,121 @@
         }
     }
 
-    function setStatus(msg, type = '') {
+    function setStatus(msg, type='') {
         const el = document.getElementById('status');
-        el.textContent = msg;
-        el.className = 'status-msg ' + type;
+        el.textContent  = msg;
+        el.className    = 'status-msg ' + type;
     }
 
-    function capture() {
-        setStatus('Capturing...', '');
+    function showPreview(src) {
+        const img = document.getElementById('preview-img');
+        img.src              = src;
+        img.style.display    = 'block';
+        document.getElementById('preview-placeholder').style.display = 'none';
+        captured = true;
+        setStatus('Photo captured — name it and save', 'ok');
+        setStep(2);
+    }
 
+    // ── Local laptop camera capture ───────────────────────────────────────────
+    function captureLocal() {
+        setStatus('Capturing...', '');
         fetch("/capture-frame", { method: "POST" })
             .then(r => r.json())
             .then(data => {
                 if (data.status === 'ok') {
-                    const img = document.getElementById('preview-img');
-                    img.src = data.image + "?t=" + Date.now();
-                    img.style.display = 'block';
-                    document.getElementById('preview-placeholder').style.display = 'none';
-                    captured = true;
-                    setStatus('Frame captured — name it and save', 'ok');
-                    setStep(2);
+                    showPreview(data.image + "?t=" + Date.now());
                 } else {
                     setStatus(data.message, 'error');
                 }
             });
     }
 
+    // ── Phone camera capture ──────────────────────────────────────────────────
+    {% if not is_local %}
+    // start phone camera preview
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+        .then(stream => {
+            const video = document.getElementById('phone-video');
+            if (video) video.srcObject = stream;
+        })
+        .catch(() => {
+            // fallback to file input if getUserMedia fails
+            document.getElementById('phone-video').style.display = 'none';
+        });
+
+    function capturePhone() {
+        const video = document.getElementById('phone-video');
+
+        if (video && video.srcObject) {
+            // capture from live video preview
+            const canvas = document.createElement('canvas');
+            canvas.width  = video.videoWidth  || 640;
+            canvas.height = video.videoHeight || 480;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            canvas.toBlob(blob => {
+                capturedBlob = blob;
+                showPreview(URL.createObjectURL(blob));
+            }, 'image/jpeg', 0.9);
+        } else {
+            // fallback: open camera via file input
+            const input = document.getElementById('phone-file');
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    capturedBlob = file;
+                    showPreview(URL.createObjectURL(file));
+                }
+            };
+            input.click();
+        }
+    }
+    {% endif %}
+
+    // ── Save item ─────────────────────────────────────────────────────────────
     function saveItem() {
         const name = document.getElementById('item-name').value.trim();
 
-        if (!name) {
-            setStatus('Enter a name first', 'error');
-            return;
-        }
-        if (!captured) {
-            setStatus('Capture a frame first', 'error');
-            return;
-        }
+        if (!name)     { setStatus('Enter a name first', 'error'); return; }
+        if (!captured) { setStatus('Capture a photo first', 'error'); return; }
 
         setStatus('Saving...', '');
 
+        {% if is_local %}
+        // local: server already has the file
         fetch("/save-item", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: name })
+            body: JSON.stringify({ name })
         })
         .then(r => r.json())
-        .then(data => {
-            if (data.status === 'ok') {
-                setStatus(`✓ ${name} registered`, 'ok');
-                setStep(4);
-                // reset for next item
-                captured = false;
-                document.getElementById('item-name').value = '';
-                setTimeout(() => { setStep(0); setStatus(''); }, 3000);
-            } else {
-                setStatus(data.message, 'error');
-            }
-        });
+        .then(finish);
+
+        {% else %}
+        // cloud: upload the photo blob
+        const form = new FormData();
+        form.append('name',  name);
+        form.append('photo', capturedBlob, 'capture.jpg');
+
+        fetch("/save-item", { method: "POST", body: form })
+            .then(r => r.json())
+            .then(finish);
+        {% endif %}
+    }
+
+    function finish(data) {
+        if (data.status === 'ok') {
+            setStatus('✓ ' + data.message, 'ok');
+            setStep(4);
+            captured     = false;
+            capturedBlob = null;
+            document.getElementById('item-name').value    = '';
+            document.getElementById('preview-img').style.display = 'none';
+            document.getElementById('preview-placeholder').style.display = 'block';
+            setTimeout(() => { setStep(0); setStatus(''); }, 3000);
+        } else {
+            setStatus(data.message, 'error');
+        }
     }
 
     function stopCamera() {
