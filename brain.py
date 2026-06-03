@@ -19,7 +19,8 @@ COOLDOWN_SECONDS  = 30
 RELOAD_EVERY      = 5
 CONFIDENCE_MIN    = 0.65
 ORB_MATCH_MIN     = 6
-FRAME_PUSH_INTERVAL = 1   # push frame every 1 second
+TIMELINE_INTERVAL   = 120  # log location every 2 minutes
+FRAME_PUSH_INTERVAL = 1    # push frame every 1 second
 last_frame_push     = 0
 
 # ── Setup ─────────────────────────────────────────────────────────────────────
