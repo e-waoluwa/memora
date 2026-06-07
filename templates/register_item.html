@@ -255,34 +255,39 @@
             document.getElementById('phone-video').style.display = 'none';
         });
 
-    function capturePhone() {
-        const video = document.getElementById('phone-video');
+  function capturePhone() {
+    const video = document.getElementById('phone-video');
 
-        if (video && video.srcObject) {
-            // capture from live video preview
-            const canvas = document.createElement('canvas');
-            canvas.width  = video.videoWidth  || 640;
-            canvas.height = video.videoHeight || 480;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            canvas.toBlob(blob => {
-                capturedBlob = blob;
-                showPreview(URL.createObjectURL(blob));
-            }, 'image/jpeg', 0.9);
-        } else {
-            // fallback: open camera via file input
-            const input = document.getElementById('phone-file');
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    capturedBlob = file;
-                    showPreview(URL.createObjectURL(file));
-                }
+    if (video && video.srcObject) {
+        const canvas  = document.createElement('canvas');
+        canvas.width  = 640;
+        canvas.height = 480;
+        canvas.getContext('2d').drawImage(video, 0, 0, 640, 480);
+        canvas.toBlob(blob => {
+            capturedBlob = blob;
+            showPreview(URL.createObjectURL(blob));
+        }, 'image/jpeg', 0.7);
+    } else {
+        const input = document.getElementById('phone-file');
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const img = new Image();
+            img.onload = () => {
+                const canvas  = document.createElement('canvas');
+                canvas.width  = 640;
+                canvas.height = 480;
+                canvas.getContext('2d').drawImage(img, 0, 0, 640, 480);
+                canvas.toBlob(blob => {
+                    capturedBlob = blob;
+                    showPreview(URL.createObjectURL(blob));
+                }, 'image/jpeg', 0.7);
             };
-            input.click();
-        }
+            img.src = URL.createObjectURL(file);
+        };
+        input.click();
     }
-    {% endif %}
-
+}
     // ── Save item ─────────────────────────────────────────────────────────────
     function saveItem() {
         const name = document.getElementById('item-name').value.trim();
