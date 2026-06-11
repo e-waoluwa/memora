@@ -208,22 +208,32 @@ def save_item():
         if not watch_id:
             return jsonify({"status": "error", "message": "No Watch ID"})
 
-        # get name from form or JSON
-        name = request.form.get("name", "").strip()
+        # get name and photo from JSON body
+        data = request.get_json(silent=True) or {}
+        name = data.get("name", "").strip()
+
         if not name:
-            name = (request.get_json(silent=True) or {}).get("name", "").strip()
+            name = request.form.get("name", "").strip()
         if not name:
             return jsonify({"status": "error", "message": "No name given"})
 
         wdir = watch_dir(watch_id)
+        dest = f"{wdir}/registered_items/{name}.jpg"
 
-        if "photo" in request.files:
-            file = request.files["photo"]
-            dest = f"{wdir}/registered_items/{name}.jpg"
-            file.save(dest)
+        if "photo_b64" in data and data["photo_b64"]:
+            # cloud: photo sent as base64 JSON
+            img_bytes = base64.b64decode(data["photo_b64"])
+            with open(dest, "wb") as f:
+                f.write(img_bytes)
+
+        elif "photo" in request.files:
+            # fallback: multipart form upload
+            request.files["photo"].save(dest)
+
         elif os.path.exists("temp/capture.jpg"):
-            dest = f"{wdir}/registered_items/{name}.jpg"
+            # local: use server-side captured frame
             shutil.copy2("temp/capture.jpg", dest)
+
         else:
             return jsonify({"status": "error", "message": "No photo found — snap first"})
 

@@ -9,10 +9,7 @@
         gap: 28px;
         margin-top: 32px;
     }
-
-    @media (max-width: 700px) {
-        .register-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 700px) { .register-grid { grid-template-columns: 1fr; } }
 
     .camera-wrap {
         position: relative;
@@ -22,112 +19,63 @@
         overflow: hidden;
         aspect-ratio: 4/3;
     }
-
     .camera-wrap img, .camera-wrap video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
+        width: 100%; height: 100%; object-fit: cover; display: block;
     }
-
     .camera-wrap::before, .camera-wrap::after {
         content: '';
         position: absolute;
         width: 20px; height: 20px;
-        border-color: var(--accent);
-        border-style: solid;
-        z-index: 2;
-        opacity: 0.6;
+        border-color: var(--accent); border-style: solid;
+        z-index: 2; opacity: 0.6;
     }
     .camera-wrap::before { top:10px; left:10px; border-width:2px 0 0 2px; }
     .camera-wrap::after  { bottom:10px; right:10px; border-width:0 2px 2px 0; }
 
     .rec-badge {
-        position: absolute;
-        top:12px; right:14px;
-        font-size: 9px;
-        letter-spacing: 3px;
-        color: var(--accent);
-        text-transform: uppercase;
-        z-index: 3;
-        animation: pulse 2s infinite;
+        position: absolute; top:12px; right:14px;
+        font-size: 9px; letter-spacing: 3px;
+        color: var(--accent); text-transform: uppercase;
+        z-index: 3; animation: pulse 2s infinite;
     }
 
     .preview-wrap {
         background: var(--surface2);
         border: 1px solid var(--border2);
-        border-radius: 4px;
-        overflow: hidden;
+        border-radius: 4px; overflow: hidden;
         aspect-ratio: 4/3;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
+        display: flex; align-items: center; justify-content: center;
     }
-
-    .preview-wrap img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: none;
-    }
-
-    .preview-placeholder {
-        text-align: center;
-        color: var(--text-muted);
-    }
-    .preview-placeholder .icon { font-size: 40px; margin-bottom: 10px; }
+    .preview-wrap img { width:100%; height:100%; object-fit:cover; display:none; }
+    .preview-placeholder { text-align:center; color:var(--text-muted); }
+    .preview-placeholder .icon { font-size:40px; margin-bottom:10px; }
     .preview-placeholder p { font-size:10px; letter-spacing:3px; text-transform:uppercase; }
 
-    .controls {
-        margin-top: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
+    .controls { margin-top:20px; display:flex; flex-direction:column; gap:10px; }
     .name-row { display:flex; gap:8px; }
     .name-row input { flex:1; }
 
     .status-msg {
-        font-size: 11px;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: var(--text-muted);
-        padding: 10px 0;
-        min-height: 36px;
-        transition: color 0.3s;
+        font-size:11px; letter-spacing:2px; text-transform:uppercase;
+        color:var(--text-muted); padding:10px 0; min-height:36px; transition:color 0.3s;
     }
     .status-msg.ok    { color: var(--accent); }
     .status-msg.error { color: var(--danger); }
 
-    .steps { margin-top:32px; display:flex; gap:0; }
-    .step {
-        flex:1; padding:16px;
-        border:1px solid var(--border);
-        border-right: none;
-        text-align: center;
-    }
-    .step:last-child { border-right:1px solid var(--border); border-radius:0 4px 4px 0; }
+    .steps { margin-top:32px; display:flex; }
+    .step { flex:1; padding:16px; border:1px solid var(--border); border-right:none; text-align:center; }
+    .step:last-child  { border-right:1px solid var(--border); border-radius:0 4px 4px 0; }
     .step:first-child { border-radius:4px 0 0 4px; }
-    .step-num {
-        font-family: var(--font-head);
-        font-size: 32px;
-        color: var(--border2);
-        line-height: 1;
-        margin-bottom: 6px;
-    }
+    .step-num { font-family:var(--font-head); font-size:32px; color:var(--border2); line-height:1; margin-bottom:6px; }
     .step.done .step-num { color: var(--accent); }
     .step-text { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
 
-    /* hidden file input */
-    #phone-file { display: none; }
+    #phone-file { display:none; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page">
-
     <div class="section-label">Memory Registration</div>
     <div class="section-title">Register New Item</div>
 
@@ -139,27 +87,19 @@
     </div>
 
     <div class="register-grid">
-
-        <!-- Camera side -->
         <div>
             <div style="font-size:10px;letter-spacing:3px;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">
                 {% if is_local %}Live Camera{% else %}Phone Camera{% endif %}
             </div>
-
-            <div class="camera-wrap" id="camera-wrap">
+            <div class="camera-wrap">
                 <span class="rec-badge">● Live</span>
                 {% if is_local %}
-                    <!-- Local: stream from laptop -->
-                    <img src="{{ url_for('video_feed') }}" alt="Live feed">
+                <img src="{{ url_for('video_feed') }}" alt="Live feed">
                 {% else %}
-                    <!-- Cloud: show phone camera preview -->
-                    <video id="phone-video" autoplay playsinline muted></video>
+                <video id="phone-video" autoplay playsinline muted></video>
                 {% endif %}
             </div>
-
-            <!-- Hidden file input for fallback -->
             <input type="file" id="phone-file" accept="image/*" capture="environment">
-
             <div class="controls">
                 {% if is_local %}
                 <button class="btn btn-primary" onclick="captureLocal()" style="justify-content:center;">
@@ -174,12 +114,10 @@
             </div>
         </div>
 
-        <!-- Preview + save side -->
         <div>
             <div style="font-size:10px;letter-spacing:3px;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">
                 Captured Frame
             </div>
-
             <div class="preview-wrap" id="preview-wrap">
                 <div class="preview-placeholder" id="preview-placeholder">
                     <div class="icon">👁️</div>
@@ -187,7 +125,6 @@
                 </div>
                 <img id="preview-img" alt="Captured frame">
             </div>
-
             <div class="controls">
                 <div class="name-row">
                     <input id="item-name" type="text" placeholder="Name this item... e.g. my keys">
@@ -196,39 +133,48 @@
                 <div class="status-msg" id="status"></div>
             </div>
         </div>
-
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    let captured     = false;
-    let capturedBlob = null;   // holds phone camera photo
+    let captured      = false;
+    let capturedB64   = null;   // base64 string of the compressed photo
 
     function setStep(n) {
-        for (let i = 1; i <= 4; i++) {
-            document.getElementById(`step${i}`).classList.toggle('done', i <= n);
-        }
+        for (let i = 1; i <= 4; i++)
+            document.getElementById('step'+i).classList.toggle('done', i <= n);
     }
 
     function setStatus(msg, type='') {
         const el = document.getElementById('status');
-        el.textContent  = msg;
-        el.className    = 'status-msg ' + type;
+        el.textContent = msg;
+        el.className   = 'status-msg ' + type;
     }
 
     function showPreview(src) {
         const img = document.getElementById('preview-img');
-        img.src              = src;
-        img.style.display    = 'block';
+        img.src   = src;
+        img.style.display = 'block';
         document.getElementById('preview-placeholder').style.display = 'none';
         captured = true;
         setStatus('Photo captured — name it and save', 'ok');
         setStep(2);
     }
 
-    // ── Local laptop camera capture ───────────────────────────────────────────
+    function compressToBase64(source, callback) {
+        const canvas  = document.createElement('canvas');
+        canvas.width  = 640;
+        canvas.height = 480;
+        canvas.getContext('2d').drawImage(source, 0, 0, 640, 480);
+        // get base64 string directly — no Blob needed
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        capturedB64   = dataUrl.split(',')[1];  // strip the "data:image/jpeg;base64," prefix
+        callback(dataUrl);
+    }
+
+    // ── Local laptop camera ───────────────────────────────────────────────────
     function captureLocal() {
         setStatus('Capturing...', '');
         fetch("/capture-frame", { method: "POST" })
@@ -236,86 +182,76 @@
             .then(data => {
                 if (data.status === 'ok') {
                     showPreview(data.image + "?t=" + Date.now());
+                    captured    = true;
+                    capturedB64 = null;  // local uses server-side file
                 } else {
                     setStatus(data.message, 'error');
                 }
             });
     }
 
-    // ── Phone camera capture ──────────────────────────────────────────────────
+    // ── Phone camera ──────────────────────────────────────────────────────────
     {% if not is_local %}
-    // start phone camera preview
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
         .then(stream => {
-            const video = document.getElementById('phone-video');
-            if (video) video.srcObject = stream;
+            const v = document.getElementById('phone-video');
+            if (v) v.srcObject = stream;
         })
         .catch(() => {
-            // fallback to file input if getUserMedia fails
-            document.getElementById('phone-video').style.display = 'none';
+            const v = document.getElementById('phone-video');
+            if (v) v.style.display = 'none';
         });
 
-  function capturePhone() {
-    const video = document.getElementById('phone-video');
+    function capturePhone() {
+        const video = document.getElementById('phone-video');
 
-    if (video && video.srcObject) {
-        const canvas  = document.createElement('canvas');
-        canvas.width  = 640;
-        canvas.height = 480;
-        canvas.getContext('2d').drawImage(video, 0, 0, 640, 480);
-        canvas.toBlob(blob => {
-            capturedBlob = blob;
-            showPreview(URL.createObjectURL(blob));
-        }, 'image/jpeg', 0.7);
-    } else {
-        const input = document.getElementById('phone-file');
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const img = new Image();
-            img.onload = () => {
-                const canvas  = document.createElement('canvas');
-                canvas.width  = 640;
-                canvas.height = 480;
-                canvas.getContext('2d').drawImage(img, 0, 0, 640, 480);
-                canvas.toBlob(blob => {
-                    capturedBlob = blob;
-                    showPreview(URL.createObjectURL(blob));
-                }, 'image/jpeg', 0.7);
+        if (video && video.srcObject && video.videoWidth > 0) {
+            // live preview available — capture from it
+            compressToBase64(video, dataUrl => showPreview(dataUrl));
+        } else {
+            // fallback: open camera via file input
+            const input = document.getElementById('phone-file');
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const img  = new Image();
+                img.onload = () => compressToBase64(img, dataUrl => showPreview(dataUrl));
+                img.src    = URL.createObjectURL(file);
             };
-            img.src = URL.createObjectURL(file);
-        };
-        input.click();
+            input.click();
+        }
     }
-}
+    {% endif %}
+
     // ── Save item ─────────────────────────────────────────────────────────────
     function saveItem() {
         const name = document.getElementById('item-name').value.trim();
-
         if (!name)     { setStatus('Enter a name first', 'error'); return; }
         if (!captured) { setStatus('Capture a photo first', 'error'); return; }
 
         setStatus('Saving...', '');
 
         {% if is_local %}
-        // local: server already has the file
+        // local: server already has the frame saved
         fetch("/save-item", {
-            method: "POST",
+            method:  "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name })
+            body:    JSON.stringify({ name: name })
         })
         .then(r => r.json())
-        .then(finish);
+        .then(finish)
+        .catch(err => setStatus('Error: ' + err, 'error'));
 
         {% else %}
-        // cloud: upload the photo blob
-        const form = new FormData();
-        form.append('name',  name);
-        form.append('photo', capturedBlob, 'capture.jpg');
-
-        fetch("/save-item", { method: "POST", body: form })
-            .then(r => r.json())
-            .then(finish);
+        // cloud: send photo as base64 JSON — simple and reliable
+        fetch("/save-item", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ name: name, photo_b64: capturedB64 })
+        })
+        .then(r => r.json())
+        .then(finish)
+        .catch(err => setStatus('Error: ' + err, 'error'));
         {% endif %}
     }
 
@@ -323,14 +259,14 @@
         if (data.status === 'ok') {
             setStatus('✓ ' + data.message, 'ok');
             setStep(4);
-            captured     = false;
-            capturedBlob = null;
-            document.getElementById('item-name').value    = '';
+            captured    = false;
+            capturedB64 = null;
+            document.getElementById('item-name').value = '';
             document.getElementById('preview-img').style.display = 'none';
             document.getElementById('preview-placeholder').style.display = 'block';
             setTimeout(() => { setStep(0); setStatus(''); }, 3000);
         } else {
-            setStatus(data.message, 'error');
+            setStatus(data.message || 'Unknown error', 'error');
         }
     }
 
