@@ -18,14 +18,13 @@ app = Flask(__name__)
 SETTINGS_FILE = "settings.json"
 
 # current frame storage (in memory — for live feed from watch)
-_current_frames = {}   # { watch_id: jpeg_bytes }
+_current_frames = {}
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def get_watch_id():
-    # Railway environment variable takes priority
     env_id = os.environ.get("WATCH_ID")
     if env_id:
-        return env_id
+        return env_id.strip()
     try:
         with open(SETTINGS_FILE, "r") as f:
             return json.load(f).get("watch_id")
@@ -34,8 +33,8 @@ def get_watch_id():
 
 def watch_dir(watch_id):
     path = f"data/{watch_id}"
-    os.makedirs(f"{path}/snapshots",         exist_ok=True)
-    os.makedirs(f"{path}/registered_items",  exist_ok=True)
+    os.makedirs(f"{path}/snapshots",        exist_ok=True)
+    os.makedirs(f"{path}/registered_items", exist_ok=True)
     return path
 
 def load_json(path, default):
@@ -60,11 +59,11 @@ def format_time(saved_time):
         saved_dt = datetime.strptime(saved_time, "%Y-%m-%d %H:%M:%S")
         now      = datetime.now()
         seconds  = (now - saved_dt).total_seconds()
-        if seconds < 60:        return "just now"
-        elif seconds < 3600:    return f"{int(seconds//60)} minutes ago"
-        elif seconds < 86400:   return f"{int(seconds//3600)} hours ago"
-        elif seconds < 172800:  return "yesterday"
-        else:                   return saved_dt.strftime("%d %b %Y, %H:%M")
+        if seconds < 60:       return "just now"
+        elif seconds < 3600:   return f"{int(seconds//60)} minutes ago"
+        elif seconds < 86400:  return f"{int(seconds//3600)} hours ago"
+        elif seconds < 172800: return "yesterday"
+        else:                  return saved_dt.strftime("%d %b %Y, %H:%M")
     except:
         return saved_time
 
@@ -183,19 +182,16 @@ def temp_preview():
 # ── Watch live frame (cloud) ──────────────────────────────────────────────────
 @app.route("/api/<watch_id>/frame", methods=["POST"])
 def receive_frame(watch_id):
-    """brain.py pushes current frame here every second."""
-    data      = request.get_json()
-    img_b64   = data.get("frame")
+    data    = request.get_json()
+    img_b64 = data.get("frame")
     if img_b64:
         _current_frames[watch_id] = base64.b64decode(img_b64)
     return jsonify({"status": "ok"})
 
 @app.route("/watch/<watch_id>/live")
 def watch_live(watch_id):
-    """Serves the latest frame from the watch as a JPEG."""
     frame = _current_frames.get(watch_id)
     if not frame:
-        # return a placeholder
         placeholder = b'\xff\xd8\xff\xe0\x00\x10JFIF'
         return Response(placeholder, mimetype="image/jpeg")
     return Response(frame, mimetype="image/jpeg")
@@ -207,33 +203,39 @@ def register_item():
 
 @app.route("/save-item", methods=["POST"])
 def save_item():
-    watch_id = get_watch_id()
-    if not watch_id:
-        return jsonify({"status": "error", "message": "No Watch ID"})
+    try:
+        watch_id = get_watch_id()
+        if not watch_id:
+            return jsonify({"status": "error", "message": "No Watch ID"})
 
-    name = request.form.get("name", "").strip() or \
-           (request.get_json() or {}).get("name", "").strip()
+        # get name from form or JSON
+        name = request.form.get("name", "").strip()
+        if not name:
+            name = (request.get_json(silent=True) or {}).get("name", "").strip()
+        if not name:
+            return jsonify({"status": "error", "message": "No name given"})
 
-    if not name:
-        return jsonify({"status": "error", "message": "No name given"})
+        wdir = watch_dir(watch_id)
 
-    wdir = watch_dir(watch_id)
+        if "photo" in request.files:
+            file = request.files["photo"]
+            dest = f"{wdir}/registered_items/{name}.jpg"
+            file.save(dest)
+        elif os.path.exists("temp/capture.jpg"):
+            dest = f"{wdir}/registered_items/{name}.jpg"
+            shutil.copy2("temp/capture.jpg", dest)
+        else:
+            return jsonify({"status": "error", "message": "No photo found — snap first"})
 
-    # handle phone camera upload (multipart form)
-    if "photo" in request.files:
-        file = request.files["photo"]
-        dest = f"{wdir}/registered_items/{name}.jpg"
-        file.save(dest)
-    elif os.path.exists("temp/capture.jpg"):
-        dest = f"{wdir}/registered_items/{name}.jpg"
-        shutil.copy2("temp/capture.jpg", dest)
-    else:
-        return jsonify({"status": "error", "message": "No photo captured"})
+        items       = load_json(f"{wdir}/items.json", {})
+        items[name] = dest
+        save_json(f"{wdir}/items.json", items)
+        return jsonify({"status": "ok", "message": f"'{name}' registered ✅"})
 
-    items       = load_json(f"{wdir}/items.json", {})
-    items[name] = dest
-    save_json(f"{wdir}/items.json", items)
-    return jsonify({"status": "ok", "message": f"'{name}' registered ✅"})
+    except Exception as e:
+        import traceback
+        print("SAVE ERROR:", traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)})
 
 # ── Gallery ───────────────────────────────────────────────────────────────────
 @app.route("/gallery")
@@ -307,15 +309,14 @@ def timeline():
 # ── Pair ──────────────────────────────────────────────────────────────────────
 @app.route("/pair")
 def pair():
-    watch_id = get_watch_id()
-    # generate QR code dynamically as base64 — no file needed
+    watch_id  = get_watch_id()
     qr_base64 = None
     if watch_id:
         try:
-            import qrcode, io
-            qr  = qrcode.QRCode(version=1,
-                                 error_correction=qrcode.constants.ERROR_CORRECT_H,
-                                 box_size=8, border=3)
+            import qrcode
+            qr = qrcode.QRCode(version=1,
+                               error_correction=qrcode.constants.ERROR_CORRECT_H,
+                               box_size=8, border=3)
             qr.add_data(watch_id)
             qr.make(fit=True)
             img = qr.make_image(fill_color="black", back_color="white")
@@ -351,7 +352,7 @@ def manifest():
     return send_from_directory("static", "manifest.json",
                                mimetype="application/manifest+json")
 
-# ── Watch API — brain.py posts data here ─────────────────────────────────────
+# ── Watch API ─────────────────────────────────────────────────────────────────
 @app.route("/api/<watch_id>/memory", methods=["POST"])
 def api_receive_memory(watch_id):
     data   = request.get_json()
@@ -390,9 +391,9 @@ def api_receive_timeline(watch_id):
 
 @app.route("/api/<watch_id>/snapshot", methods=["POST"])
 def api_receive_snapshot(watch_id):
-    data      = request.get_json()
-    img_b64   = data.get("image")
-    filename  = data.get("filename")
+    data     = request.get_json()
+    img_b64  = data.get("image")
+    filename = data.get("filename")
     if not img_b64 or not filename:
         return jsonify({"status": "error", "message": "Missing data"})
     wdir = watch_dir(watch_id)
