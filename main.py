@@ -199,7 +199,12 @@ def watch_live(watch_id):
 # ── Registration ──────────────────────────────────────────────────────────────
 @app.route("/register-item")
 def register_item():
-    return render_template("register_item.html", is_local=is_local())
+    try:
+        return render_template("register_item.html", is_local=is_local())
+    except Exception as e:
+        import traceback
+        print("REGISTER PAGE ERROR:", traceback.format_exc())
+        return f"Template error: {str(e)}", 500
 
 @app.route("/save-item", methods=["POST"])
 def save_item():

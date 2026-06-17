@@ -3,74 +3,62 @@
 
 {% block head %}
 <style>
-    .register-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 28px;
-        margin-top: 32px;
+    .register-wrap {
+        max-width: 500px;
+        margin: 40px auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
-    @media (max-width: 700px) { .register-grid { grid-template-columns: 1fr; } }
 
-    .camera-wrap {
-        position: relative;
+    .photo-box {
+        width: 100%;
+        aspect-ratio: 4/3;
         background: var(--surface2);
         border: 1px solid var(--border2);
         border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         overflow: hidden;
-        aspect-ratio: 4/3;
-    }
-    .camera-wrap img, .camera-wrap video {
-        width: 100%; height: 100%; object-fit: cover; display: block;
-    }
-    .camera-wrap::before, .camera-wrap::after {
-        content: '';
-        position: absolute;
-        width: 20px; height: 20px;
-        border-color: var(--accent); border-style: solid;
-        z-index: 2; opacity: 0.6;
-    }
-    .camera-wrap::before { top:10px; left:10px; border-width:2px 0 0 2px; }
-    .camera-wrap::after  { bottom:10px; right:10px; border-width:0 2px 2px 0; }
-
-    .rec-badge {
-        position: absolute; top:12px; right:14px;
-        font-size: 9px; letter-spacing: 3px;
-        color: var(--accent); text-transform: uppercase;
-        z-index: 3; animation: pulse 2s infinite;
+        position: relative;
     }
 
-    .preview-wrap {
-        background: var(--surface2);
-        border: 1px solid var(--border2);
-        border-radius: 4px; overflow: hidden;
-        aspect-ratio: 4/3;
-        display: flex; align-items: center; justify-content: center;
+    .photo-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
     }
-    .preview-wrap img { width:100%; height:100%; object-fit:cover; display:none; }
-    .preview-placeholder { text-align:center; color:var(--text-muted); }
-    .preview-placeholder .icon { font-size:40px; margin-bottom:10px; }
-    .preview-placeholder p { font-size:10px; letter-spacing:3px; text-transform:uppercase; }
 
-    .controls { margin-top:20px; display:flex; flex-direction:column; gap:10px; }
-    .name-row { display:flex; gap:8px; }
-    .name-row input { flex:1; }
+    .photo-placeholder {
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+    .photo-placeholder .icon { font-size: 48px; margin-bottom: 10px; }
+
+    .photo-placeholder p {
+        font-size: 10px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+    }
 
     .status-msg {
-        font-size:11px; letter-spacing:2px; text-transform:uppercase;
-        color:var(--text-muted); padding:10px 0; min-height:36px; transition:color 0.3s;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        min-height: 24px;
+        transition: color 0.3s;
     }
     .status-msg.ok    { color: var(--accent); }
     .status-msg.error { color: var(--danger); }
 
-    .steps { margin-top:32px; display:flex; }
-    .step { flex:1; padding:16px; border:1px solid var(--border); border-right:none; text-align:center; }
-    .step:last-child  { border-right:1px solid var(--border); border-radius:0 4px 4px 0; }
-    .step:first-child { border-radius:4px 0 0 4px; }
-    .step-num { font-family:var(--font-head); font-size:32px; color:var(--border2); line-height:1; margin-bottom:6px; }
-    .step.done .step-num { color: var(--accent); }
-    .step-text { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+    .name-row { display: flex; gap: 8px; }
+    .name-row input { flex: 1; }
 
-    #phone-file { display:none; }
+    #file-input { display: none; }
 </style>
 {% endblock %}
 
@@ -79,204 +67,110 @@
     <div class="section-label">Memory Registration</div>
     <div class="section-title">Register New Item</div>
 
-    <div class="steps">
-        <div class="step" id="step1"><div class="step-num">01</div><div class="step-text">Point at item</div></div>
-        <div class="step" id="step2"><div class="step-num">02</div><div class="step-text">Capture frame</div></div>
-        <div class="step" id="step3"><div class="step-num">03</div><div class="step-text">Name the item</div></div>
-        <div class="step" id="step4"><div class="step-num">04</div><div class="step-text">Save to memory</div></div>
-    </div>
+    <div class="register-wrap">
 
-    <div class="register-grid">
-        <div>
-            <div style="font-size:10px;letter-spacing:3px;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">
-                {% if is_local %}Live Camera{% else %}Phone Camera{% endif %}
+        <!-- Photo preview -->
+        <div class="photo-box" id="photo-box">
+            <div class="photo-placeholder" id="placeholder">
+                <div class="icon">👁️</div>
+                <p>No photo yet</p>
             </div>
-            <div class="camera-wrap">
-                <span class="rec-badge">● Live</span>
-                {% if is_local %}
-                <img src="{{ url_for('video_feed') }}" alt="Live feed">
-                {% else %}
-                <video id="phone-video" autoplay playsinline muted></video>
-                {% endif %}
-            </div>
-            <input type="file" id="phone-file" accept="image/*" capture="environment">
-            <div class="controls">
-                {% if is_local %}
-                <button class="btn btn-primary" onclick="captureLocal()" style="justify-content:center;">
-                    📸 &nbsp;Capture This Frame
-                </button>
-                <button class="btn btn-danger" onclick="stopCamera()">■ &nbsp;Stop Camera</button>
-                {% else %}
-                <button class="btn btn-primary" onclick="capturePhone()" style="justify-content:center;">
-                    📸 &nbsp;Take Photo
-                </button>
-                {% endif %}
-            </div>
+            <img id="preview" alt="preview">
         </div>
 
-        <div>
-            <div style="font-size:10px;letter-spacing:3px;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">
-                Captured Frame
-            </div>
-            <div class="preview-wrap" id="preview-wrap">
-                <div class="preview-placeholder" id="preview-placeholder">
-                    <div class="icon">👁️</div>
-                    <p>Awaiting capture</p>
-                </div>
-                <img id="preview-img" alt="Captured frame">
-            </div>
-            <div class="controls">
-                <div class="name-row">
-                    <input id="item-name" type="text" placeholder="Name this item... e.g. my keys">
-                    <button class="btn btn-primary" onclick="saveItem()">Save</button>
-                </div>
-                <div class="status-msg" id="status"></div>
-            </div>
+        <!-- Take photo button -->
+        <input type="file" id="file-input" accept="image/*" capture="environment">
+        <button class="btn btn-primary" onclick="takePhoto()" style="justify-content:center; width:100%;">
+            📸 &nbsp;Take Photo
+        </button>
+
+        <!-- Name + save -->
+        <div class="name-row">
+            <input id="item-name" type="text" placeholder="Name this item... e.g. my keys">
+            <button class="btn btn-primary" onclick="saveItem()">Save</button>
         </div>
+
+        <div class="status-msg" id="status"></div>
+
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    let captured      = false;
-    let capturedB64   = null;   // base64 string of the compressed photo
+    let photoB64 = null;
 
-    function setStep(n) {
-        for (let i = 1; i <= 4; i++)
-            document.getElementById('step'+i).classList.toggle('done', i <= n);
-    }
-
-    function setStatus(msg, type='') {
+    function setStatus(msg, type) {
         const el = document.getElementById('status');
         el.textContent = msg;
-        el.className   = 'status-msg ' + type;
+        el.className   = 'status-msg ' + (type || '');
     }
 
-    function showPreview(src) {
-        const img = document.getElementById('preview-img');
-        img.src   = src;
-        img.style.display = 'block';
-        document.getElementById('preview-placeholder').style.display = 'none';
-        captured = true;
-        setStatus('Photo captured — name it and save', 'ok');
-        setStep(2);
-    }
+    function takePhoto() {
+        const input = document.getElementById('file-input');
+        input.onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-    function compressToBase64(source, callback) {
-        const canvas  = document.createElement('canvas');
-        canvas.width  = 640;
-        canvas.height = 480;
-        canvas.getContext('2d').drawImage(source, 0, 0, 640, 480);
-        // get base64 string directly — no Blob needed
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        capturedB64   = dataUrl.split(',')[1];  // strip the "data:image/jpeg;base64," prefix
-        callback(dataUrl);
-    }
+            const img  = new Image();
+            img.onload = function() {
+                // compress to 640x480
+                const canvas = document.createElement('canvas');
+                canvas.width  = 640;
+                canvas.height = 480;
+                canvas.getContext('2d').drawImage(img, 0, 0, 640, 480);
 
-    // ── Local laptop camera ───────────────────────────────────────────────────
-    function captureLocal() {
-        setStatus('Capturing...', '');
-        fetch("/capture-frame", { method: "POST" })
-            .then(r => r.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    showPreview(data.image + "?t=" + Date.now());
-                    captured    = true;
-                    capturedB64 = null;  // local uses server-side file
-                } else {
-                    setStatus(data.message, 'error');
-                }
-            });
-    }
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                photoB64      = dataUrl.split(',')[1];
 
-    // ── Phone camera ──────────────────────────────────────────────────────────
-    {% if not is_local %}
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
-        .then(stream => {
-            const v = document.getElementById('phone-video');
-            if (v) v.srcObject = stream;
-        })
-        .catch(() => {
-            const v = document.getElementById('phone-video');
-            if (v) v.style.display = 'none';
-        });
+                // show preview
+                const preview = document.getElementById('preview');
+                preview.src   = dataUrl;
+                preview.style.display = 'block';
+                document.getElementById('placeholder').style.display = 'none';
 
-    function capturePhone() {
-        const video = document.getElementById('phone-video');
-
-        if (video && video.srcObject && video.videoWidth > 0) {
-            // live preview available — capture from it
-            compressToBase64(video, dataUrl => showPreview(dataUrl));
-        } else {
-            // fallback: open camera via file input
-            const input = document.getElementById('phone-file');
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const img  = new Image();
-                img.onload = () => compressToBase64(img, dataUrl => showPreview(dataUrl));
-                img.src    = URL.createObjectURL(file);
+                setStatus('Photo ready — enter a name and save', 'ok');
             };
-            input.click();
-        }
+            img.src = URL.createObjectURL(file);
+        };
+        input.click();
     }
-    {% endif %}
 
-    // ── Save item ─────────────────────────────────────────────────────────────
     function saveItem() {
         const name = document.getElementById('item-name').value.trim();
-        if (!name)     { setStatus('Enter a name first', 'error'); return; }
-        if (!captured) { setStatus('Capture a photo first', 'error'); return; }
+
+        if (!name) {
+            setStatus('Enter a name first', 'error');
+            return;
+        }
+
+        if (!photoB64) {
+            setStatus('Take a photo first', 'error');
+            return;
+        }
 
         setStatus('Saving...', '');
 
-        {% if is_local %}
-        // local: server already has the frame saved
-        fetch("/save-item", {
-            method:  "POST",
-            headers: { "Content-Type": "application/json" },
-            body:    JSON.stringify({ name: name })
+        fetch('/save-item', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ name: name, photo_b64: photoB64 })
         })
-        .then(r => r.json())
-        .then(finish)
-        .catch(err => setStatus('Error: ' + err, 'error'));
-
-        {% else %}
-        // cloud: send photo as base64 JSON — simple and reliable
-        fetch("/save-item", {
-            method:  "POST",
-            headers: { "Content-Type": "application/json" },
-            body:    JSON.stringify({ name: name, photo_b64: capturedB64 })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'ok') {
+                setStatus('✓ ' + data.message, 'ok');
+                photoB64 = null;
+                document.getElementById('item-name').value = '';
+                document.getElementById('preview').style.display = 'none';
+                document.getElementById('placeholder').style.display = 'block';
+            } else {
+                setStatus(data.message || 'Error saving', 'error');
+            }
         })
-        .then(r => r.json())
-        .then(finish)
-        .catch(err => setStatus('Error: ' + err, 'error'));
-        {% endif %}
+        .catch(function(err) {
+            setStatus('Network error: ' + err, 'error');
+        });
     }
-
-    function finish(data) {
-        if (data.status === 'ok') {
-            setStatus('✓ ' + data.message, 'ok');
-            setStep(4);
-            captured    = false;
-            capturedB64 = null;
-            document.getElementById('item-name').value = '';
-            document.getElementById('preview-img').style.display = 'none';
-            document.getElementById('preview-placeholder').style.display = 'block';
-            setTimeout(() => { setStep(0); setStatus(''); }, 3000);
-        } else {
-            setStatus(data.message || 'Unknown error', 'error');
-        }
-    }
-
-    function stopCamera() {
-        fetch("/stop-camera", { method: "POST" })
-            .then(() => setStatus('Camera stopped', ''));
-    }
-
-    document.getElementById('item-name').addEventListener('input', () => {
-        if (captured) setStep(3);
-    });
 </script>
 {% endblock %}
