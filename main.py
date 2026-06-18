@@ -199,12 +199,79 @@ def watch_live(watch_id):
 # ── Registration ──────────────────────────────────────────────────────────────
 @app.route("/register-item")
 def register_item():
-    try:
-        return render_template("register_item.html", is_local=is_local())
-    except Exception as e:
-        import traceback
-        print("REGISTER PAGE ERROR:", traceback.format_exc())
-        return f"Template error: {str(e)}", 500
+    watch_id = get_watch_id() or "NOT SET"
+    return f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memora — Register Item</title>
+    <style>
+        body {{ font-family: monospace; background: #050505; color: #d4d4d4; padding: 20px; }}
+        h1 {{ color: #00ff88; }}
+        .box {{ background: #111; border: 1px solid #222; border-radius: 4px; padding: 20px; max-width: 500px; margin: 20px auto; }}
+        img {{ width: 100%; border-radius: 4px; margin: 10px 0; display: none; }}
+        input[type=text] {{ width: 100%; padding: 10px; background: #1a1a1a; border: 1px solid #333; color: white; font-family: monospace; border-radius: 4px; box-sizing: border-box; }}
+        button {{ background: #00ff88; color: black; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-family: monospace; font-weight: bold; width: 100%; margin: 8px 0; }}
+        #status {{ margin-top: 10px; font-size: 12px; color: #00ff88; min-height: 20px; }}
+        input[type=file] {{ display: none; }}
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>👁️ Register Item</h1>
+        <p style="color:#666; font-size:11px;">Watch ID: {watch_id}</p>
+        <img id="preview">
+        <input type="file" id="file-input" accept="image/*" capture="environment">
+        <button onclick="document.getElementById('file-input').click()">📸 Take Photo</button>
+        <input type="text" id="item-name" placeholder="Name this item...">
+        <button onclick="saveItem()">💾 Save to Memory</button>
+        <div id="status"></div>
+    </div>
+    <script>
+        let photoB64 = null;
+        document.getElementById('file-input').onchange = function(e) {{
+            const file = e.target.files[0];
+            if (!file) return;
+            const img = new Image();
+            img.onload = function() {{
+                const canvas = document.createElement('canvas');
+                canvas.width = 640; canvas.height = 480;
+                canvas.getContext('2d').drawImage(img, 0, 0, 640, 480);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                photoB64 = dataUrl.split(',')[1];
+                const preview = document.getElementById('preview');
+                preview.src = dataUrl;
+                preview.style.display = 'block';
+                document.getElementById('status').innerText = 'Photo ready!';
+            }};
+            img.src = URL.createObjectURL(file);
+        }};
+        function saveItem() {{
+            const name = document.getElementById('item-name').value.trim();
+            if (!name) {{ document.getElementById('status').innerText = 'Enter a name first'; return; }}
+            if (!photoB64) {{ document.getElementById('status').innerText = 'Take a photo first'; return; }}
+            document.getElementById('status').innerText = 'Saving...';
+            fetch('/save-item', {{
+                method: 'POST',
+                headers: {{'Content-Type': 'application/json'}},
+                body: JSON.stringify({{name: name, photo_b64: photoB64}})
+            }})
+            .then(r => r.json())
+            .then(data => {{
+                document.getElementById('status').innerText = data.message || data.status;
+                if (data.status === 'ok') {{
+                    photoB64 = null;
+                    document.getElementById('item-name').value = '';
+                    document.getElementById('preview').style.display = 'none';
+                }}
+            }})
+            .catch(err => {{ document.getElementById('status').innerText = 'Error: ' + err; }});
+        }}
+    </script>
+</body>
+</html>
+"""
 
 @app.route("/save-item", methods=["POST"])
 def save_item():
